@@ -6,7 +6,7 @@ from tensorflow.keras.layers import *
 # from tensorflow.keras.models import Sequential, Model
 # from tensorflow.keras.layers import Dense, Dropout, LSTM, Conv1D, Conv2D, Flatten, BatchNormalization, MaxPooling1D, MaxPooling2D
 from tensorflow.keras.optimizers import Adam
-from utility.attention import customAttention
+from utility.attention import Attention
 import numpy as np
 
 batch_size = 32
@@ -41,41 +41,51 @@ def MultiInput(input_x):
     index_history = Input(shape=(index[1],index[2]), name="index_history")
     # target_price = Input(shape=(n_obs[1],n_obs[2]), name="target_price")
 
-    # x = LSTM(32, activation="relu", name="target_lstm1")(target)
-    x = LSTM(32, return_sequences=True, activation="relu")(target)
+    x = LSTM(64, return_sequences=True,activation="relu", name="target_lstm1")(target)
+    # x = LSTM(64, activation="relu", name="target_lstm2")(x)
+    # x = LSTM(128, return_sequences=True, activation="relu")(target)
 
     # y = LSTM(32, activation="relu", name="pos_lstm1")(pos_history)
-    y = LSTM(32, return_sequences=True, activation="relu")(pos_history)
-    # y = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=0))(y)
-
-    # w = LSTM(32, activation="relu", name="neg_lstm1")(neg_history)
-    w = LSTM(32, return_sequences=True, activation="relu")(neg_history)
+    y = LSTM(64, return_sequences=True, activation="relu", name="pos_lstm1")(pos_history)
+    # y = LSTM(64, return_sequences=True, activation="relu")(y)
+    # y = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(y)
     
-    # i = LSTM(32, activation="relu", name="index_lstm1")(index_history)
-    i = LSTM(32, return_sequences=True, activation="relu")(index_history)
+    # w = LSTM(32, activation="relu", name="neg_lstm1")(neg_history)
+    w = LSTM(64, return_sequences=True, activation="relu", name="neg_lstm1")(neg_history)
+    # w = LSTM(64, return_sequences=True, activation="relu")(w)
+    # w = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(w)
+    
+    i = LSTM(64, return_sequences=True, activation="relu", name="index_lstm1")(index_history)
+    # i = LSTM(64, activation="relu", name="index_lstm2")(i)
+    # i = LSTM(128, return_sequences=True, activation="relu")(index_history)
 
     # combine the output of the branches
     combined = concatenate([x, y, w, i],1)
-    # combined outputs
-    z = LSTM(128, activation="relu")(combined)
-    # z = customAttention(32)(z)
-    # z = LSTM(32, activation="relu")(x)
-    z = Dense(256, activation="relu")(z)
+    print(combined)
+    # combined = concatenate([x, i],1)
+    # z = LSTM(256, return_sequences=True, dropout=0.2,activation="relu")(combined)
+    # z = LSTM(128, return_sequences=True, dropout=0.2,activation="relu")(z)
+    z = Attention(60)(combined)
+    # z = Dense(256, activation="relu")(combined)
+    # z = Dropout(0.2)(z)
+    z = Dense(128, activation="relu")(z)
+    z = Dense(128, activation="relu")(z)
+    # z = Dense(64, activation="relu")(z)
+    # z = Dense(64, activation="relu")(z)
     # z = Flatten()(z)
-    # z = Dropout(0.5)(z)
     outputs = Dense(1, name='output')(z)
     # our model will accept the inputs of the two branches and    # then output a single value
     model = Model(inputs=[target,pos_history,neg_history, index_history], outputs=[outputs] , name = 'MultiInput')
+    # model = Model(inputs=[target, index_history], outputs=[outputs] , name = 'MultiInput')
     model.compile(loss="mse", optimizer='adam')
     print(model.summary())
 
-    # tf.keras.utils.plot_model(
+    # tf.keras.utils.vis_utils.plot_model(
     #     model, 
-    #     'img/milstm.png', 
+    #     'img/mialstm.png', 
     #     show_shapes=True,
     #     expand_nested=True,
     #     )
-    
     return model
 
 

@@ -5,7 +5,7 @@ from tensorflow.keras import backend as K
 # from tensorflow.keras.models import Model
 # step_dim=20 # slide winodw
 
-class customAttention(Layer):
+class Attention(Layer):
     def __init__(self, step_dim,
                  W_regularizer=None, b_regularizer=None,
                  W_constraint=None, b_constraint=None,
@@ -22,7 +22,7 @@ class customAttention(Layer):
         self.bias = bias
         self.step_dim = step_dim
         self.features_dim = 0
-        super(customAttention, self).__init__(**kwargs)
+        super(Attention, self).__init__(**kwargs)
 
     def build(self, input_shape):
         assert len(input_shape) == 3

@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from pandas_datareader import data,wb
+import pickle
+import warnings
+warnings.filterwarnings("ignore")
 
 class StockData():
     """
@@ -39,16 +42,18 @@ class StockData():
         self.folderPath = folderPath      
         self.indexPath=indexPath    
         self.batchSize=batchSize
-        self.date_duration=3000
+        # self.date_duration=1700
+        self.date_minus=10
         
         self.train_test_rate=train_test_rate
+        self.test_rate=0.9
         self.scaler=MinMaxScaler(feature_range=(-1,1))  
         self.indexScaler = MinMaxScaler(feature_range=(-1,1))
 
         self.indexPrice = self.loadIndex()
         self.stockPrice = self.loadCSV()
 
-        self.trainSet,self.testSet=self.make_dataset()
+        self.trainSet,self.validSet, self.testSet=self.make_dataset()
 
         self.batchNum={}
     
@@ -63,14 +68,19 @@ class StockData():
             batch generator
             batch={'y','xp','xn','xi','target'}
         """
-        if(option is not 'training' and option is not 'evaluation'):
-            raise ValueError('option should be "training" or "evaluation".')
+        if(option != 'training' and option != 'valid' and option != 'test'):
+            raise ValueError('option should be "training", "valid" or "test".')
 
-        if(option is 'training'):
+        if(option == 'training'):
+            # print("Use Training Dataset")
             returnSet = self.trainSet
-        else:
+        if(option == 'valid'):
+            # print("Use Valid Dataset")
+            returnSet = self.validSet
+        if(option == 'test'):
+            # print("Use Test Dataset")
             returnSet = self.testSet
-        
+
         y=[]
         xp=[]
         xn=[]
@@ -111,11 +121,18 @@ class StockData():
 
         for csv in csvList:
             data=pd.read_csv(self.folderPath+'/'+csv,engine='python', encoding= 'unicode_escape')
+            #######################
             if(len(data)>self.date_duration):
                 data=data[-self.date_duration-1:-1]
                 data=data.reset_index()
                 data=data['Open']
                 dataframe=dataframe.append(data,ignore_index=True)
+            
+            # data=data[-(self.index_len):-1]
+            # data=data.reset_index()
+            # data=data['Open']
+            # dataframe=dataframe.append(data,ignore_index=True)
+            #######################
 
         dataT=np.array(dataframe).T
         self.scaler.fit(dataT)
@@ -128,6 +145,8 @@ class StockData():
     
     def loadIndex(self):
         data=pd.read_csv(self.indexPath,engine='python')
+        # tune data duration to dataset len
+        self.date_duration=data.shape[0]-1
         data=data[-self.date_duration-1:-1]        
         data=data.reset_index()
         data=data.fillna(method='ffill')
@@ -152,14 +171,17 @@ class StockData():
         maxday=max([self.T,self.Tr])
         dataset=[]
 
+        # print('maxday:',maxday,'len(self.stockPrice):',len(self.stockPrice) )
+
         for i in range(maxday,len(self.stockPrice)):
-            print('making dataset progress : {}/{}'.format(i,len(self.stockPrice)),end='\r')
+            print('Making dataset progress : {}/{}'.format(i,len(self.stockPrice)),end='\r')
             priceSet=self.stockPrice.loc[i-self.T:i-1]
             targetSet=self.stockPrice.loc[i]
             positiveSet,negativeSet=self.calculate_correlation(self.stockPrice.loc[i-maxday:i-1])
             indexSet = self.indexPrice.loc[i-self.T:i-1]
 
             for targetNum in priceSet.columns:
+                # print('maxday:',maxday,'len(self.stockPrice):',len(self.stockPrice) )
                 target_history=np.reshape(np.array(priceSet[targetNum]),(self.T,1))
                 pos_history=np.reshape(np.array(positiveSet[targetNum].T),(10,self.T,1))
                 neg_history=np.reshape(np.array(negativeSet[targetNum].T),(10,self.T,1))
@@ -170,11 +192,20 @@ class StockData():
                                 'pos_history':pos_history,
                                 'neg_history':neg_history,
                                 'index_history':index_history,
-                                'target_price':target_price
+                                'target_price':target_price,
+                                ########
+                                'target_num':targetNum,
                             })
-        print('making dataset progress : finished\t')
-        
-        return dataset[:int(len(dataset)*self.train_test_rate)],dataset[int(len(dataset)*self.train_test_rate):]
+        print('Making dataset progress : Finished\t')
+
+        valid_index = int(len(dataset)*self.train_test_rate)
+        test_index = int(len(dataset)*self.test_rate)
+
+        trainset = dataset[:valid_index] 
+        validset = dataset[valid_index:test_index]
+        testset = dataset[test_index:]
+
+        return trainset, validset, testset
 
     def calculate_correlation(self,priceSet):
         """
@@ -209,8 +240,25 @@ class StockData():
         return positive,negative
 
             
-"""testLine
-kospi = StockData('StockChart/SAMPLE','StockChart/KOSPI.csv',20,50,10,10,0.7)
-print(np.shape(kospi.trainSet))
-print(np.shape(kospi.testSet))
-"""
+if __name__ == '__main__':
+    
+    timesize=20
+    timesize_for_calc_correlation=50
+    positive_correlation_stock_num=10
+    negative_correlation_sotck_num=10
+    train_test_rate=0.7
+    batch_size=512
+
+    #
+    data=StockData(
+        'Stock/TW0050','Stock/TWII.csv',
+        timesize,
+        timesize_for_calc_correlation,
+        positive_correlation_stock_num,
+        negative_correlation_sotck_num,
+        train_test_rate,
+        batch_size
+        )
+
+    pickle.dump(data, open('data.pk', 'wb'))
+    print(f'Dump dataset to ./data.pk')

@@ -8,6 +8,7 @@ import datetime
 import warnings
 import seaborn as sns
 from matplotlib import pyplot as plt
+from data import StockData
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
@@ -15,16 +16,12 @@ from sklearn.metrics import mean_squared_error
 from utility.utility import *
 from utility.training import callback
 import tensorflow as tf
-
 import configparser
 
 # turn off system warning 
 warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
-
 def main(config, args):
-    start_time = datetime.datetime.now()
-
     datetime_prefix = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     # basic setting
     make_dir(config)
@@ -93,7 +90,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--mode', type=str, default = 'train', required=False, help='either "train" or "test"')
     parser.add_argument('-t', '--model_type', type=str, default='dnn', required=False, help='"dnn", "conv1d", "conv2d", "lstm" or "transformer"')
-    parser.add_argument('-w', '--weight', type=str, required=False, help='stock portfolios')
     args = parser.parse_args()
 
     config = configparser.ConfigParser()
