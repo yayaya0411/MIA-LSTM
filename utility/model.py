@@ -3,8 +3,6 @@ import tensorflow as tf
 from tensorflow.keras import Input
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
-# from tensorflow.keras.models import Sequential, Model
-# from tensorflow.keras.layers import Dense, Dropout, LSTM, Conv1D, Conv2D, Flatten, BatchNormalization, MaxPooling1D, MaxPooling2D
 from tensorflow.keras.optimizers import Adam
 from utility.attention import Attention
 import numpy as np
@@ -28,12 +26,6 @@ def MultiInput(input_x):
     pos = np.array(input_x['pos_history']).shape
     neg = np.array(input_x['neg_history']).shape
     index = np.array(input_x['index_history']).shape
-    # print()
-    # print('target shape:',target)
-    # print('pos shape:',pos)
-    # print('neg shape:',neg)
-    # print('index shape:',index)
-    # print()
 
     target = Input(shape=(target[1],target[2]), name="target_history")
     pos_history = Input(shape=(pos[1],pos[2]), name="pos_history")
@@ -74,18 +66,18 @@ def MultiInput(input_x):
     # z = Dense(64, activation="relu")(z)
     # z = Flatten()(z)
     outputs = Dense(1, name='output')(z)
-    # our model will accept the inputs of the two branches and    # then output a single value
+
     model = Model(inputs=[target,pos_history,neg_history, index_history], outputs=[outputs] , name = 'MultiInput')
-    # model = Model(inputs=[target, index_history], outputs=[outputs] , name = 'MultiInput')
     model.compile(loss="mse", optimizer='adam')
     print(model.summary())
 
-    # tf.keras.utils.vis_utils.plot_model(
-    #     model, 
-    #     'img/mialstm.png', 
-    #     show_shapes=True,
-    #     expand_nested=True,
-    #     )
+    tf.keras.utils.plot_model(
+        model, 
+        'img/mialstm.png', 
+        show_shapes=True,
+        expand_nested=True,
+        )
+
     return model
 
 
@@ -94,7 +86,6 @@ dnn
 '''
 def dnn(n_obs):
     """ A multi-layer perceptron """
-    # print('\n',n_obs[0],'\n')
     model = Sequential()
     model.add(Dense(units=128, input_shape=[n_obs[1]], activation="relu"))
     model.add(Dense(units=256, input_shape=[n_obs[1]], activation="relu"))
@@ -119,7 +110,7 @@ def conv1d(n_obs):
     model = Sequential()
     model.add(Conv1D(filters = 128, kernel_size=kernel_size, strides=strides, padding=padding, activation = 'relu',input_shape=(n_obs[1],n_obs[2])))
     model.add(Conv1D(filters = 128, kernel_size=kernel_size, strides=strides, padding=padding, activation = 'relu'))
-    # model.add(Dropout(0.3))
+    model.add(Dropout(0.3))
     model.add(BatchNormalization())
     model.add(MaxPooling1D(2))
     # model.add(Conv1D(filters = 512, kernel_size=kernel_size, strides=strides, padding=padding, activation = 'relu'))
@@ -350,11 +341,10 @@ def transformer(n_obs):
     x = Concatenate(axis=-1)([in_seq, x])
     x = attn_layer1((x, x, x))
     x = attn_layer2((x, x, x))
-    # x = attn_layer3((x, x, x))
+    x = attn_layer3((x, x, x))
     x = GlobalAveragePooling1D(data_format='channels_first')(x)
     x = Dropout(0.3)(x)
     # x = Dense(128, activation='linear')(x)
-    # x = Dropout(0.1)(x)
     out = Dense(1)(x)
 
     model = Model(inputs=in_seq, outputs=out)

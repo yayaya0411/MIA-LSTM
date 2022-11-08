@@ -1,9 +1,6 @@
 from tensorflow.keras.layers import *
 from tensorflow.keras import initializers, regularizers, constraints
-# from tensorflow.keras.engine.input_layer import Input
 from tensorflow.keras import backend as K
-# from tensorflow.keras.models import Model
-# step_dim=20 # slide winodw
 
 class Attention(Layer):
     def __init__(self, step_dim,
