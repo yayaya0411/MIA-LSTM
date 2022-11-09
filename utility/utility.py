@@ -149,7 +149,7 @@ def miinput(dataset):
     y = np.array(y)
     return X, y
 
-def input(dataset):
+def build_input(dataset):
     X=[]
     y=[]
     for i in range(0,len(dataset)):

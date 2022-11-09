@@ -7,6 +7,7 @@ import pickle
 import warnings
 warnings.filterwarnings("ignore")
 
+import configparser
 class StockData():
     """
         The process for creating training datasets and evaluation datasets.
@@ -242,6 +243,16 @@ class StockData():
             
 if __name__ == '__main__':
     
+    # config = configparser.ConfigParser()
+    # config.read('config.ini')
+    
+    # timesize=config['DATA'].getint('timesize')
+    # timesize_for_calc_correlation=config['DATA'].getint('timesize_for_calc_correlation')
+    # positive_correlation_stock_num=config['DATA'].getint('positive_correlation_stock_num')
+    # negative_correlation_sotck_num=config['DATA'].getint('negative_correlation_sotck_num')
+    # train_test_rate=config['DATA'].getfloat('train_test_rate')
+    # batch_size=config['DATA'].getint('batch_size')
+    
     timesize=20
     timesize_for_calc_correlation=50
     positive_correlation_stock_num=10
@@ -249,7 +260,6 @@ if __name__ == '__main__':
     train_test_rate=0.7
     batch_size=512
 
-    #
     data=StockData(
         'Stock/TW0050','Stock/TWII.csv',
         timesize,

@@ -44,32 +44,30 @@ def main(config, args):
             model = load_model(X_valid, args.model_type)
 
         else:    
-            X_train, y_train = input(train)
-            X_valid, y_valid = input(valid)
+            X_train, y_train = build_input(train)
+            X_valid, y_valid = build_input(valid)
             model = load_model(X_valid.shape, args.model_type)
         
     if args.mode == 'test':
         test  = df.testSet 
-        X_test=[]
-        y_test=[]
-        for i in range(0,len(test)):
-            X_test.append(test[i]['target_history'])
-            y_test.append(test[i]['target_price'])
-        X_test = np.array(X_test)
-        y_test = np.array(y_test)
+        if args.model_type == 'mialstm':
+            X_test, y_test = miinput(test)
+            model = load_model(X_test, args.model_type)
 
-        model = load_model(X_test.shape, args.model_type)
+        else:    
+            X_test, y_test = build_input(test)
+            model = load_model(X_test.shape, args.model_type)
 
     print(f'Load Data Finish')
 
     if args.mode == 'train':
-        history = model.fit(
+        model.fit(
             X_train, y_train, 
             epochs=int(config['MODEL']['epoch']),
             verbose = 1,
             batch_size=512,
             validation_data=(X_valid, y_valid), 
-            # callbacks = callback(config, args, datetime_prefix)
+            # callbacks = callback(args, datetime_prefix)
         )
         y_pred = model.predict(X_valid)
 
@@ -77,13 +75,11 @@ def main(config, args):
 
         valid_mse = mean_squared_error(y_valid.reshape(-1,1), y_pred, squared=False)   
         print(args.model_type, 'mse',valid_mse)
-        pd.DataFrame(history.history).to_csv(f'logs/csv_logger/{args.model_type}/{datetime_prefix}_{valid_mse}.csv')
 
     if args.mode == 'test':
         model.load_weights(f'model/{args.model_type}/{args.model_type}')
         y_pred = model.predict(X_test)
         mse = mean_squared_error(y_test.reshape(-1,1), y_pred, squared=False)   
-        
         print(args.model_type,'mse',mse)
 
 if __name__ == '__main__':

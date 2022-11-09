@@ -4,7 +4,7 @@ from tensorflow.keras import Input
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import Adam
-from utility.attention import Attention
+from utility.attention import CustomAttention
 import numpy as np
 
 batch_size = 32
@@ -33,31 +33,23 @@ def MultiInput(input_x):
     index_history = Input(shape=(index[1],index[2]), name="index_history")
     # target_price = Input(shape=(n_obs[1],n_obs[2]), name="target_price")
 
-    x = LSTM(64, return_sequences=True,activation="relu", name="target_lstm1")(target)
-    # x = LSTM(64, activation="relu", name="target_lstm2")(x)
-    # x = LSTM(128, return_sequences=True, activation="relu")(target)
+    t = LSTM(64, return_sequences=True,activation="relu", name="target_lstm1")(target)
+    # t = LSTM(64, activation="relu", name="target_lstm2")(t)
 
-    # y = LSTM(32, activation="relu", name="pos_lstm1")(pos_history)
-    y = LSTM(64, return_sequences=True, activation="relu", name="pos_lstm1")(pos_history)
-    # y = LSTM(64, return_sequences=True, activation="relu")(y)
-    # y = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(y)
+    p = LSTM(64, return_sequences=True, activation="relu", name="pos_lstm1")(pos_history)
+    # p = LSTM(64, return_sequences=True, activation="relu")(p)
+    # p = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(p)
     
-    # w = LSTM(32, activation="relu", name="neg_lstm1")(neg_history)
-    w = LSTM(64, return_sequences=True, activation="relu", name="neg_lstm1")(neg_history)
-    # w = LSTM(64, return_sequences=True, activation="relu")(w)
-    # w = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(w)
+    n = LSTM(64, return_sequences=True, activation="relu", name="neg_lstm1")(neg_history)
+    # n = LSTM(64, return_sequences=True, activation="relu")(n)
+    # n = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(n)
     
     i = LSTM(64, return_sequences=True, activation="relu", name="index_lstm1")(index_history)
     # i = LSTM(64, activation="relu", name="index_lstm2")(i)
-    # i = LSTM(128, return_sequences=True, activation="relu")(index_history)
 
     # combine the output of the branches
-    combined = concatenate([x, y, w, i],1)
-    print(combined)
-    # combined = concatenate([x, i],1)
-    # z = LSTM(256, return_sequences=True, dropout=0.2,activation="relu")(combined)
-    # z = LSTM(128, return_sequences=True, dropout=0.2,activation="relu")(z)
-    z = Attention(60)(combined)
+    combined = concatenate([t, p, n, i],1)
+    z = CustomAttention(combined.shape[1])(combined)
     # z = Dense(256, activation="relu")(combined)
     # z = Dropout(0.2)(z)
     z = Dense(128, activation="relu")(z)
