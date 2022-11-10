@@ -72,7 +72,9 @@ def main(config, args):
         y_pred = model.predict(X_valid)
 
         model.save_weights(f'model/{args.model_type}/{args.model_type}')
-
+        print(f'y_valid:{y_valid.shape}')
+        print(f'y_pred:{y_pred.shape}')
+        print(f'y_valid.reshape:{y_valid.reshape(-1,1).shape}')
         valid_mse = mean_squared_error(y_valid.reshape(-1,1), y_pred, squared=False)   
         print(args.model_type, 'mse',valid_mse)
 
