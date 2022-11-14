@@ -6,7 +6,7 @@ import numpy as np
 import pickle
 from sklearn.preprocessing import StandardScaler
 from utility.techIndex import talib_index
-from utility.model import dnn, lstm, conv1d, conv2d, transformer, MultiInput
+from utility.model import dnn, lstm, conv1d, conv2d, transformer, MultiInput,OriMultiInput
 
 
 def log(config, args):
@@ -120,6 +120,8 @@ def load_model(X, args):
         return transformer(X)
     if args == 'mialstm':
         return MultiInput(X)
+    if args == 'ori-mialstm':
+        return OriMultiInput(X)
 
 def inverse_predict(y, config):
     scalery_file = os.path.join('scaler', config['STOCK']['stock'] + config['STOCK']['scaler_y'])

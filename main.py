@@ -38,7 +38,7 @@ def main(config, args):
     if args.mode == 'train':
         train  = df.trainSet 
         valid  = df.validSet 
-        if args.model_type == 'mialstm':
+        if args.model_type in ['ori-mialstm','mialstm']:
             X_train, y_train = miinput(train)
             X_valid, y_valid = miinput(valid)
             model = load_model(X_valid, args.model_type)
@@ -50,7 +50,8 @@ def main(config, args):
         
     if args.mode == 'test':
         test  = df.testSet 
-        if args.model_type == 'mialstm':
+        if args.model_type in ['ori-mialstm','mialstm']:
+        # if args.model_type == 'mialstm':
             X_test, y_test = miinput(test)
             model = load_model(X_test, args.model_type)
 
