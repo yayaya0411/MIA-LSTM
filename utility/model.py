@@ -34,7 +34,7 @@ def OriMultiInput(input_x):
 
     # combine the output of the branches
     combined = concatenate([t, p, n, i],1)
-    z = LSTM(64, return_sequences=True, activation="relu", name="index_lstm1")(combined)
+    z = LSTM(64, return_sequences=True, activation="relu")(combined)
 
     z, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(combined, combined, combined)
     z = Flatten()(z)
@@ -75,33 +75,26 @@ def MultiInput(input_x):
     index_history = Input(shape=(index[1],index[2]), name="index_history")
     # target_price = Input(shape=(n_obs[1],n_obs[2]), name="target_price")
 
-    t = LSTM(64, return_sequences=True,activation="relu", name="target_lstm1")(target)
-    # t = LSTM(64, activation="relu", name="target_lstm2")(t)
+    t = LSTM(128, return_sequences=True,activation="relu", name="target_lstm1")(target)
+    # t = LSTM(64, activation="relu", name="target_lstm2")(target)
 
-    p = LSTM(64, return_sequences=True, activation="relu", name="pos_lstm1")(pos_history)
-    # p = LSTM(64, return_sequences=True, activation="relu")(p)
+    p = LSTM(128, return_sequences=True, activation="relu", name="pos_lstm1")(pos_history)
+    # p = LSTM(64, return_sequences=True, activation="relu")(pos_history)
     # p = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(p)
     
-    n = LSTM(64, return_sequences=True, activation="relu", name="neg_lstm1")(neg_history)
-    # n = LSTM(64, return_sequences=True, activation="relu")(n)
+    n = LSTM(128, return_sequences=True, activation="relu", name="neg_lstm1")(neg_history)
+    # n = LSTM(64, return_sequences=True, activation="relu")(neg_history)
     # n = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(n)
     
-    i = LSTM(64, return_sequences=True, activation="relu", name="index_lstm1")(index_history)
-    # i = LSTM(64, activation="relu", name="index_lstm2")(i)
+    i = LSTM(128, return_sequences=True, activation="relu", name="index_lstm1")(index_history)
+    # i = LSTM(64, activation="relu", name="index_lstm2")(index_history)
 
     # combine the output of the branches
     combined = concatenate([t, p, n, i],1)
-    # z = CustomAttention(combined.shape[1])(combined)
-    z = LSTM(64, return_sequences=True, activation="relu", name="index_lstm1")(combined)
-
-    z, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(combined, combined, combined)
-    # z = Dense(256, activation="relu")(combined)
-    z = Flatten()(z)
-    z = Dense(64, activation="relu")(z)
-    z = Dense(64, activation="relu")(z)
-    z = Dense(64, activation="relu")(z)
-    z = Dense(64, activation="relu")(z)
-    z = Dense(64, activation="relu")(z)
+    z = CustomAttention(combined.shape[1])(combined)
+    # z, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(combined, combined, combined)
+    # z = LSTM(128, return_sequences=True, activation="relu")(z)
+    z = Dense(256, activation="relu")(z)
     outputs = Dense(1, name='output')(z)
 
     model = Model(inputs=[target,pos_history,neg_history, index_history], outputs=[outputs] , name = 'MultiInput')
