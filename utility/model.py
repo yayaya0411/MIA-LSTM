@@ -14,7 +14,7 @@ import numpy as np
 """
 Original Multi Input Network
 """
-def OriMultiInput(input_x):
+def MultiInput(input_x):
     # define sets of inputs
     
     target = np.array(input_x['target_history']).shape
@@ -51,7 +51,7 @@ def OriMultiInput(input_x):
 
     tf.keras.utils.plot_model(
         model, 
-        'img/ori_mialstm.png', 
+        'img/Ori-MIlstm.png', 
         show_shapes=True,
         expand_nested=True,
         )
@@ -59,9 +59,9 @@ def OriMultiInput(input_x):
     return model
 
 """
-Multi Input Network
+Single Attention Multi Input Network
 """
-def MultiInput(input_x):
+def SingleAttentionLSTM(input_x):
     # define sets of inputs
     
     target = np.array(input_x['target_history']).shape
@@ -76,24 +76,18 @@ def MultiInput(input_x):
     # target_price = Input(shape=(n_obs[1],n_obs[2]), name="target_price")
 
     t = LSTM(128, return_sequences=True,activation="relu", name="target_lstm1")(target)
-    # t = LSTM(64, activation="relu", name="target_lstm2")(target)
 
     p = LSTM(128, return_sequences=True, activation="relu", name="pos_lstm1")(pos_history)
-    # p = LSTM(64, return_sequences=True, activation="relu")(pos_history)
     # p = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(p)
     
     n = LSTM(128, return_sequences=True, activation="relu", name="neg_lstm1")(neg_history)
-    # n = LSTM(64, return_sequences=True, activation="relu")(neg_history)
     # n = tf.keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(n)
     
     i = LSTM(128, return_sequences=True, activation="relu", name="index_lstm1")(index_history)
-    # i = LSTM(64, activation="relu", name="index_lstm2")(index_history)
 
     # combine the output of the branches
     combined = concatenate([t, p, n, i],1)
     z = CustomAttention(combined.shape[1])(combined)
-    # z, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(combined, combined, combined)
-    # z = LSTM(128, return_sequences=True, activation="relu")(z)
     z = Dense(256, activation="relu")(z)
     outputs = Dense(1, name='output')(z)
 
@@ -103,13 +97,53 @@ def MultiInput(input_x):
 
     tf.keras.utils.plot_model(
         model, 
-        'img/mialstm.png', 
+        'img/Single-Attention.png', 
         show_shapes=True,
         expand_nested=True,
         )
 
     return model
 
+"""
+MultiHeadAttention Multi Input Network
+"""
+def MultiHeadAttentionLSTM(input_x):
+    # define sets of inputs
+    
+    target = np.array(input_x['target_history']).shape
+    pos = np.array(input_x['pos_history']).shape
+    neg = np.array(input_x['neg_history']).shape
+    index = np.array(input_x['index_history']).shape
+
+    target = Input(shape=(target[1],target[2]), name="target_history")
+    pos_history = Input(shape=(pos[1],pos[2]), name="pos_history")
+    neg_history = Input(shape=(neg[1],neg[2]), name="neg_history")
+    index_history = Input(shape=(index[1],index[2]), name="index_history")
+
+    t = LSTM(128, return_sequences=True,activation="relu", name="target_lstm1")(target)
+    p = LSTM(128, return_sequences=True, activation="relu", name="pos_lstm1")(pos_history)
+    n = LSTM(128, return_sequences=True, activation="relu", name="neg_lstm1")(neg_history)
+    i = LSTM(128, return_sequences=True, activation="relu", name="index_lstm1")(index_history)
+
+    # combine the output of the branches
+    combined = concatenate([t, p, n, i],1)
+    z, slf_attn = MultiHeadAttention(n_head=3, d_model=300, d_k=64, d_v=64, dropout=0.1)(combined, combined, combined)
+    # z = Flatten()(z)
+    z = LSTM(128, activation="relu")(z)
+    outputs = Dense(1, name='output')(z)
+
+    model = Model(inputs=[target,pos_history,neg_history, index_history], outputs=[outputs] , name = 'MultiInput')
+    model.compile(loss="mse", optimizer='adam')
+    print(model.summary())
+
+    tf.keras.utils.plot_model(
+        model, 
+        'img/MultiHead-Attention.png', 
+        show_shapes=True,
+        expand_nested=True,
+        )
+
+    return model
 
 '''
 dnn 
